@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HSK 2 Quiz — Hanzi, Pinyin & Arti</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:18px;
+    background:linear-gradient(160deg,#ecfdf5 0%,#f8fafc 45%,#eff6ff 100%);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+    color:#1e293b;
+  }
+  .app{width:100%;max-width:600px}
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  h1{font-size:19px;margin:0;letter-spacing:.3px}
+  h1 span{color:#059669}
+  .stats{display:flex;gap:14px;font-size:13px;color:#475569}
+  .stats b{color:#0f172a}
+  .modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .modes button{
+    flex:1 1 auto;padding:9px 10px;border-radius:10px;border:1px solid #e2e8f0;
+    background:#fff;color:#475569;font-size:12.5px;font-weight:600;cursor:pointer;
+    transition:.15s;white-space:nowrap;
+  }
+  .modes button:hover{border-color:#a7f3d0}
+  .modes button.active{background:#059669;border-color:#059669;color:#fff;box-shadow:0 6px 16px -6px #059669}
+  .card{
+    background:#fff;border-radius:20px;padding:22px 20px 18px;
+    box-shadow:0 20px 45px -20px rgba(15,23,42,.25),0 2px 8px rgba(15,23,42,.05);
+    border:1px solid #eef2f7;
+  }
+  .prompt{
+    text-align:center;font-weight:700;line-height:1.25;
+    font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  .prompt.hanzi{font-size:clamp(52px,16vw,80px);letter-spacing:4px}
+  .prompt.pinyin{font-size:clamp(32px,10vw,50px);color:#059669;letter-spacing:1px;font-family:inherit}
+  .sub{text-align:center;color:#94a3b8;font-size:13.5px;margin:8px 0 20px;min-height:19px}
+  .options{display:grid;gap:9px}
+  .option{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+    padding:13px 15px;border-radius:13px;border:1.5px solid #e6eaf2;background:#fbfcfe;
+    font-size:16px;color:#1e293b;font-weight:500;transition:.15s;font-family:inherit;
+  }
+  .option:hover:not(:disabled){border-color:#6ee7b7;background:#f0fdf9;transform:translateY(-1px)}
+  .option:disabled{cursor:default}
+  .option .key{
+    flex:0 0 24px;height:24px;border-radius:7px;background:#ecfdf5;color:#059669;
+    font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
+  .option.hanzi-opt .txt{font-size:26px;font-family:"Noto Sans SC","PingFang SC",sans-serif}
+  .option.correct{border-color:#10b981;background:#ecfdf5;color:#065f46}
+  .option.correct .key{background:#10b981;color:#fff}
+  .option.wrong{border-color:#ef4444;background:#fef2f2;color:#991b1b}
+  .option.wrong .key{background:#ef4444;color:#fff}
+  .feedback{margin-top:16px;padding:0 14px;border-radius:13px;max-height:0;overflow:hidden;
+    opacity:0;transition:.25s ease;border:1.5px solid transparent}
+  .feedback.show{max-height:240px;opacity:1;padding:13px 14px}
+  .feedback.ok{background:#ecfdf5;border-color:#a7f3d0}
+  .feedback.no{background:#fef2f2;border-color:#fecaca}
+  .fb-title{font-size:13px;font-weight:700;margin-bottom:7px}
+  .feedback.ok .fb-title{color:#047857}
+  .feedback.no .fb-title{color:#b91c1c}
+  .fb-detail{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .d-hz{font-size:27px;font-weight:700;font-family:"Noto Sans SC","PingFang SC",sans-serif}
+  .d-py{font-size:16px;color:#059669;font-weight:600}
+  .d-pos{font-size:11.5px;color:#64748b;background:#f1f5f9;padding:2px 7px;border-radius:6px}
+  .d-en{font-size:14px;color:#334155}
+  .next{
+    display:block;width:100%;margin-top:14px;padding:14px;border-radius:13px;border:none;
+    background:#059669;color:#fff;font-size:15.5px;font-weight:700;cursor:pointer;
+    transition:.15s;font-family:inherit;
+  }
+  .next:hover{background:#047857;transform:translateY(-1px)}
+  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;
+    font-size:12px;color:#94a3b8;gap:10px;flex-wrap:wrap}
+  .footer button{background:none;border:none;color:#94a3b8;font-size:12px;cursor:pointer;
+    text-decoration:underline;font-family:inherit}
+  .footer button:hover{color:#059669}
+  @media(max-width:420px){ .card{padding:18px 15px 15px} .stats{gap:10px;font-size:12px} }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>HSK 2 <span>Quiz</span></h1>
+    <div class="stats">
+      <span>Skor <b id="score">0</b>/<b id="total">0</b></span>
+      <span>Akurasi <b id="acc">–</b></span>
+      <span>Streak <b id="streak">0</b></span>
+    </div>
+  </header>
+
+  <div class="modes" id="modes">
+    <button data-mode="pinyin" class="active">Hanzi → Pinyin</button>
+    <button data-mode="meaning">Hanzi → Arti</button>
+    <button data-mode="hanzi">Pinyin+Arti → Hanzi</button>
+    <button data-mode="mix">🎲 Campur</button>
+  </div>
+
+  <div class="card">
+    <div class="prompt hanzi" id="prompt">爱好</div>
+    <div class="sub" id="sub">Bagaimana cara membacanya (pinyin)?</div>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next" id="next" hidden>Lanjut →</button>
+  </div>
+
+  <div class="footer">
+    <span id="counter">Soal ke-0</span>
+    <span id="bank">Bank kata: 0</span>
+    <button id="reset">Ulangi dari awal</button>
+  </div>
+</div>
+
+<script>
+/* ====== DATA: kosakata HSK 2 (dari file HSK2-Vocabulary-3.0.pdf) ====== */
+const RAW = [
+/* --- halaman 2 --- */
+["啊","a","part./interj.","ah; oh (exclamation of surprise)"],
+["爱好","àihào","n./v.","interests; hobbies"],
+["白色","báisè","n.","white (colour)"],
+["班","bān","n./mw.","class"],
+["帮","bāng","v.","to help, to assist"],
+["帮忙","bāngmáng","v.","to lend a hand"],
+["包","bāo","n./v./mw.","package; bag; to wrap; packet"],
+["本子","běnzi","n.","notebook"],
+["比","bǐ","v./prep.","to compare"],
+["笔","bǐ","n./mw.","pen; pencil; writing brush"],
+["别","bié","adv.","don't; separate"],
+["不错","búcuò","adj.","correct; not bad"],
+["不好意思","bù hǎoyìsi","v.","to feel embarrassed"],
+["长","cháng","adj.","long (also zhǎng: to grow)"],
+["车站","chēzhàn","n.","(rail) station"],
+["出","chū","v.","to go out"],
+["出国","chūguó","v.","to go abroad"],
+["出来","chūlái","v.","to come out"],
+["出门","chūmén","v.","to go out (of the house)"],
+["出去","chūqù","v.","to go out"],
+["床","chuáng","n.","bed; couch"],
+/* --- halaman 3 --- */
+["词","cí","n.","word; speech; statement"],
+["次","cì","mw.","time; occurrence"],
+["从","cóng","prep.","from; since"],
+["从小","cóngxiǎo","adv.","from childhood"],
+["错","cuò","adj.","wrong"],
+["打","dǎ","v.","to hit, to strike; to make (a phone call)"],
+["打车","dǎchē","v.","to take a taxi (in town)"],
+["打开","dǎkāi","v.","to open"],
+["但","dàn","conj.","but, however"],
+["但是","dànshì","conj.","but; however"],
+["得","de","part.","particle connecting verb to adverb"],
+["地","de","part.","particle connecting adverb to verb"],
+["等","děng","v./prep.","to wait; to wait for"],
+["地铁","dìtiě","n.","subway; metro; tube"],
+["点","diǎn","n./v./mw.","to order; to light; to nod"],
+["懂","dǒng","v.","to understand"],
+["动","dòng","v.","to move, to act, to change"],
+["饭馆","fànguǎn","n.","restaurant"],
+["飞","fēi","v.","to fly"],
+["高","gāo","adj.","high; tall"],
+["高中","gāozhōng","n.","senior high school"],
+/* --- halaman 6 --- */
+["篮球","lánqiú","n.","basketball"],
+["累","lèi","v./adj.","tired"],
+["离","lí","v.","to be distant from; to leave"],
+["里面","lǐmiàn","n.","inside"],
+["楼","lóu","n.","multi-storied building"],
+["路","lù","n.","road; route; bus number"],
+["路上","lùshang","n.","on the road"],
+["旅游","lǚyóu","v.","to travel; tourism"],
+["绿茶","lǜchá","n.","green tea"],
+["绿色","lǜsè","n./adj.","green (colour)"],
+["慢","màn","adj.","slow"],
+["没意思","méi yìsi","adj.","boring"],
+["每","měi","adv./pron.","every; each"],
+["门","mén","n.","door"],
+["门口","ménkǒu","n.","doorway"],
+["门票","ménpiào","n.","ticket (for theatre, cinema, etc.)"],
+["面","miàn","n./v./mw.","side; aspect; surface"],
+["名","míng","n./mw.","name"],
+["拿","ná","v.","to take"],
+["那么","nàme","pron./conj.","like that"],
+["那样","nàyàng","pron.","that kind"],
+["奶茶","nǎichá","n.","milk tea"],
+/* --- halaman 8 --- */
+["时","shí","n./mw.","time; season; period"],
+["事情","shìqing","n.","matter; affair; thing"],
+["手","shǒu","n.","hand"],
+["手表","shǒubiǎo","n.","watch"],
+["书包","shūbāo","n.","schoolbag"],
+["舒服","shūfu","adj.","comfortable"],
+["送","sòng","v.","to give (a present); to deliver; to see someone off"],
+["虽然","suīrán","conj.","although; even though"],
+["所以","suǒyǐ","conj.","therefore"],
+["疼","téng","v./adj.","pain; to hurt"],
+["踢","tī","v.","to kick"],
+["题","tí","n.","question"],
+["条","tiáo","n./mw.","measure word for long thin things; strip"],
+["跳舞","tiàowǔ","v.","to dance"],
+["头","tóu","n./adj./mw.","head; top, end; first"],
+["外国","wàiguó","n.","foreign country"],
+["外面","wàimiàn","n.","outside"],
+["完","wán","v.","to finish"],
+["万","wàn","num.","ten thousand"],
+["往","wǎng","v./prep.","towards"],
+["网上","wǎngshang","n.","online"],
+["忘","wàng","v.","to forget, to neglect"],
+/* --- halaman 9 --- */
+["位","wèi","mw.","position (polite measure word for people)"],
+["为什么","wèishénme","adv.","why?"],
+["希望","xīwàng","v.","to hope; to wish"],
+["洗","xǐ","v.","to wash"],
+["洗手间","xǐshǒujiān","n.","toilets; washroom"],
+["下来","xiàlái","v.","to come down"],
+["下面","xiàmiàn","n.","below"],
+["下去","xiàqù","v.","to go down"],
+["小孩儿","xiǎoháir","n.","child; kid"],
+["小时候","xiǎoshíhou","n.","in one's childhood"],
+["笑","xiào","v.","to laugh; to smile"],
+["姓","xìng","n./v.","surname"],
+["姓名","xìngmíng","n.","surname and given name"],
+["颜色","yánsè","n.","colour"],
+["眼睛","yǎnjing","n.","eye"],
+["药","yào","n.","medicine"],
+["药店","yàodiàn","n.","pharmacy"],
+["爷爷","yéye","n.","grandfather (father's father)"],
+["一会儿","yīhuìr","adv./num./mw.","a short while"],
+["已经","yǐjīng","adv.","already"],
+["一起","yīqǐ","adv.","together"],
+["意思","yìsi","n.","meaning"],
+/* --- halaman 11 --- */
+["足球","zúqiú","n.","soccer ball"],
+["最","zuì","adv.","most"],
+["左","zuǒ","n.","left (direction or side)"],
+["左边","zuǒbian","n.","on the left"]
+];
+
+/* ====== SETUP ====== */
+const WORDS = RAW.map((r,i)=>({id:i, w:r[0], p:r[1], pos:r[2], e:r[3]}));
+const $ = s => document.querySelector(s);
+const promptEl = $('#prompt'), subEl = $('#sub'), optionsEl = $('#options');
+const feedbackEl = $('#feedback'), nextBtn = $('#next');
+const scoreEl = $('#score'), totalEl = $('#total'), accEl = $('#acc'), streakEl = $('#streak');
+const counterEl = $('#counter'), bankEl = $('#bank');
+
+let mode = 'pinyin';
+let queue = [];
+let cur = null;
+let answered = false;
+let score = 0, total = 0, streak = 0, bestStreak = 0;
+
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const answerOf = (w, m) => m === 'pinyin' ? w.p : m === 'meaning' ? w.e : w.w;
+
+/* ====== GAME ====== */
+function nextQuestion(){
+  if(queue.length === 0) queue = shuffle(WORDS.slice());
+  const target = queue.pop();
+  const qmode = mode === 'mix' ? pick(['pinyin','meaning','hanzi']) : mode;
+
+  // cari pengecoh yang tidak membingungkan (pinyin/arti/hanzi berbeda)
+  let pool = WORDS.filter(w =>
+    w.id !== target.id &&
+    w.p !== target.p &&
+    w.e !== target.e &&
+    w.w !== target.w
+  );
+  // fallback bila bank kata terlalu kecil
+  if(pool.length < 3) pool = WORDS.filter(w => w.id !== target.id);
+
+  const others = shuffle(pool.slice()).slice(0,3);
+  const options = shuffle([target, ...others]);
+
+  cur = { target, qmode, options };
+  answered = false;
+  render();
+}
+
+function label(w, qmode){
+  return qmode === 'pinyin' ? w.p : qmode === 'meaning' ? w.e : w.w;
+}
+
+function render(){
+  const { target, qmode, options } = cur;
+  feedbackEl.className = 'feedback';
+  feedbackEl.innerHTML = '';
+  nextBtn.hidden = true;
+
+  if(qmode === 'pinyin'){
+    promptEl.textContent = target.w;
+    promptEl.className = 'prompt hanzi';
+    subEl.textContent = 'Bagaimana cara membacanya (pinyin)?';
+  } else if(qmode === 'meaning'){
+    promptEl.textContent = target.w;
+    promptEl.className = 'prompt hanzi';
+    subEl.textContent = 'Apa arti kata ini dalam bahasa Inggris?';
+  } else {
+    promptEl.textContent = target.p;
+    promptEl.className = 'prompt pinyin';
+    subEl.textContent = target.e + ' — pilih hanzi yang tepat';
+  }
+
+  optionsEl.innerHTML = '';
+  options.forEach((w, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option' + (qmode === 'hanzi' ? ' hanzi-opt' : '');
+    btn.innerHTML = '<span class="key">' + (i+1) + '</span><span class="txt"></span>';
+    btn.querySelector('.txt').textContent = label(w, qmode);
+    btn.addEventListener('click', () => choose(w, btn));
+    optionsEl.appendChild(btn);
+  });
+}
+
+function choose(chosen, btn){
+  if(answered) return;
+  answered = true;
+
+  const correct = chosen.id === cur.target.id;
+  total++;
+  if(correct){ score++; streak++; bestStreak = Math.max(bestStreak, streak); }
+  else { streak = 0; }
+
+  Array.from(optionsEl.children).forEach((b, i) => {
+    const w = cur.options[i];
+    b.disabled = true;
+    if(w.id === cur.target.id) b.classList.add('correct');
+    else if(b === btn) b.classList.add('wrong');
+  });
+
+  const t = cur.target;
+  feedbackEl.className = 'feedback show ' + (correct ? 'ok' : 'no');
+  feedbackEl.innerHTML =
+    '<div class="fb-title">' + (correct ? '✓ Benar!' : '✗ Kurang tepat') + '</div>' +
+    '<div class="fb-detail">' +
+      '<span class="d-hz"></span>' +
+      '<span class="d-py"></span>' +
+      '<span class="d-pos"></span>' +
+      '<span class="d-en"></span>' +
+    '</div>';
+  feedbackEl.querySelector('.d-hz').textContent = t.w;
+  feedbackEl.querySelector('.d-py').textContent = t.p;
+  feedbackEl.querySelector('.d-pos').textContent = t.pos;
+  feedbackEl.querySelector('.d-en').textContent = t.e;
+
+  updateStats();
+  nextBtn.hidden = false;
+  nextBtn.focus({ preventScroll: true });
+}
+
+function updateStats(){
+  scoreEl.textContent = score;
+  totalEl.textContent = total;
+  accEl.textContent = total ? Math.round(score / total * 100) + '%' : '–';
+  streakEl.textContent = streak;
+  counterEl.textContent = 'Soal ke-' + total + ' · Terbaik: ' + bestStreak + ' streak';
+}
+
+function resetSession(){
+  queue = [];
+  score = 0; total = 0; streak = 0; bestStreak = 0;
+  updateStats();
+  nextQuestion();
+}
+
+/* ====== EVENTS ====== */
+nextBtn.addEventListener('click', nextQuestion);
+
+document.querySelectorAll('#modes button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#modes button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    mode = b.dataset.mode;
+    resetSession();
+  });
+});
+
+$('#reset').addEventListener('click', resetSession);
+
+document.addEventListener('keydown', e => {
+  if(!answered && ['1','2','3','4'].includes(e.key)){
+    const btn = optionsEl.children[Number(e.key) - 1];
+    if(btn && !btn.disabled) btn.click();
+  } else if(answered && (e.key === 'Enter' || e.key === ' ')){
+    e.preventDefault();
+    nextQuestion();
+  }
+});
+
+/* start */
+bankEl.textContent = 'Bank kata: ' + WORDS.length;
+resetSession();
+</script>
+</body>
+</html>
